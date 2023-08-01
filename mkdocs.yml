@@ -1,8 +1,8 @@
 # yaml-language-server: $schema=https://squidfunk.github.io/mkdocs-material/schema.json
 INHERIT: mkdocs/base.yml  # use the shared AutoRA configuration by default
 
-site_name: AutoRA autora-synthetic-generator-equation-sampler
-repo_url: 'https://github.com/AutoResearch/autora-synthetic-generator-equation-sampler'
+site_name: Equation Sampler
+repo_url: 'https://github.com/AutoResearch/equation-sampler'
 
 nav:
 - Home: 'index.md'

@@ -1,7 +1,7 @@
 [project]
 # UPDATE THIS BEFORE PUBLISHING
-name = "autora-synthetic-generator-equation-sampler"
-description = "Describe your contribution"
+name = "equation-sampler"
+description = "Tool to sample equations"
 authors = [{ name = "Ioana Marinescu", email = "ioanam@princeton.edu" }]
 dynamic = ["version"]
 
@@ -11,8 +11,7 @@ requires-python = ">=3.8,<4"
 
 # ADD NEW DEPENDENCIES HERE
 dependencies = [
-    "autora-core",
-    "scikit-learn",
+    "numpy",
     "sympy"
 ]
 

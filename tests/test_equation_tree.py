@@ -1,8 +1,6 @@
 import numpy as np
 
-from autora.experiment_runner.synthetic.generator.equation.equation_tree import (
-    EquationTree,
-)
+from src.equation_tree import EquationTree
 
 
 def test_equation_sampler():

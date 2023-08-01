@@ -1,10 +1,6 @@
 import numpy as np
 
-from autora.experiment_runner.synthetic.generator.equation import (
-    infix_to_prefix,
-    prefix_to_infix,
-    simplify,
-)
+from src import infix_to_prefix, prefix_to_infix, simplify
 
 
 def test_simplification():
