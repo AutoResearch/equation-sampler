@@ -1,6 +1,6 @@
 import numpy as np
 
-from autora.experiment_runner.synthetic.generator.equations.equation_tree import (
+from autora.experiment_runner.synthetic.generator.equation.equation_tree import (
     EquationTree,
 )
 
