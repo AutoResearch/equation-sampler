@@ -1,6 +1,6 @@
 import numpy as np
 
-from src import infix_to_prefix, prefix_to_infix, simplify
+from equation_sampler import infix_to_prefix, prefix_to_infix, simplify
 
 
 def test_simplification():

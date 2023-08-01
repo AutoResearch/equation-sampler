@@ -1,6 +1,6 @@
 import numpy as np
 
-from src.equation_tree import EquationTree
+from equation_sampler.equation_tree import EquationTree
 
 
 def test_equation_sampler():

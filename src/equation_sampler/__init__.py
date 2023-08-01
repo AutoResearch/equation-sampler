@@ -48,7 +48,7 @@ def infix_to_postfix(infix, function_space, operation_space):
     while i < n:
         # Check if the character is alphabet or digit
         if infix[i].isdigit() and infix[i + 1] == "_":
-            output.append(infix[i: i + 3][::-1])
+            output.append(infix[i : i + 3][::-1])
             i += 2
         elif infix[i].isdigit():
             output.append(infix[i])
@@ -65,9 +65,9 @@ def infix_to_postfix(infix, function_space, operation_space):
         # Found an operator
         else:
             if (
-                    char_stack[-1] in function_space
-                    or char_stack[-1] in operation_space
-                    or char_stack[-1] in [")", "("]
+                char_stack[-1] in function_space
+                or char_stack[-1] in operation_space
+                or char_stack[-1] in [")", "("]
             ):
                 if infix[i] == "^":
                     while get_priority(infix[i]) <= get_priority(char_stack[-1]):
@@ -114,25 +114,25 @@ def infix_to_prefix(infix, function_space, operation_space):
 
 
 def sample_equations(
-        num_samples: int,
-        max_depth: int,
-        max_num_variables: int,
-        max_num_constants: int,
-        function_space: list,
-        operation_space: list,
-        without_replacement: bool = True,
-        fix_num_variables_to_max: bool = False,
-        include_zero_as_constant=False,
-        min_input_value: float = -1,
-        max_input_value: float = 1,
-        min_constant_value: float = -1,
-        max_constant_value: float = 1,
-        num_input_points: int = 100,
-        num_constant_points: int = 100,
-        num_evaluation_samples: int = 100,
-        max_iter: int = 1000000,
-        require_simplify=True,
-        verbose=True,
+    num_samples: int,
+    max_depth: int,
+    max_num_variables: int,
+    max_num_constants: int,
+    function_space: list,
+    operation_space: list,
+    without_replacement: bool = True,
+    fix_num_variables_to_max: bool = False,
+    include_zero_as_constant=False,
+    min_input_value: float = -1,
+    max_input_value: float = 1,
+    min_constant_value: float = -1,
+    max_constant_value: float = 1,
+    num_input_points: int = 100,
+    num_constant_points: int = 100,
+    num_evaluation_samples: int = 100,
+    max_iter: int = 1000000,
+    require_simplify=True,
+    verbose=True,
 ):
     """
     Generate data for the equation generator.
@@ -231,8 +231,8 @@ def sample_equations(
                 continue
 
             if (
-                    fix_num_variables_to_max
-                    and len(np.unique(tree.variables)) < max_num_variables
+                fix_num_variables_to_max
+                and len(np.unique(tree.variables)) < max_num_variables
             ):
                 continue
 
@@ -290,15 +290,15 @@ def sample_equations(
 
 
 def create_crossings(
-        num_inputs,
-        num_constants,
-        min_input_value: float = -1,
-        max_input_value: float = 1,
-        min_constant_value: float = -1,
-        max_constant_value: float = 1,
-        num_input_points: int = 100,
-        num_constant_points: int = 100,
-        num_evaluation_samples: int = 100,
+    num_inputs,
+    num_constants,
+    min_input_value: float = -1,
+    max_input_value: float = 1,
+    min_constant_value: float = -1,
+    max_constant_value: float = 1,
+    num_input_points: int = 100,
+    num_constant_points: int = 100,
+    num_evaluation_samples: int = 100,
 ):
     grids = []
 
@@ -326,12 +326,12 @@ def create_crossings(
 
 
 def get_evaluation(
-        crossings,
-        tree,
-        num_evaluation_samples=100,
-        include_zero_as_constant=False,
-        max_nodes_for_evaluation=None,
-        transpose=False,
+    crossings,
+    tree,
+    num_evaluation_samples=100,
+    include_zero_as_constant=False,
+    max_nodes_for_evaluation=None,
+    transpose=False,
 ):
     evaluation = np.zeros((num_evaluation_samples, len(tree.expr)))
 
