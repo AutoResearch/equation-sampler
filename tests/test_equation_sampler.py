@@ -1,6 +1,6 @@
 import numpy as np
 
-from autora.experiment_runner.synthetic.generator.equation_sampler.equation_sampler import (
+from autora.experiment_runner.synthetic.generator.equations import (
     infix_to_prefix,
     prefix_to_infix,
     simplify,

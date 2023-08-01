@@ -1,8 +1,9 @@
 import itertools
 
 import numpy as np
-from .equation_tree import EquationTree, is_binary_tree, rooted_tree_iterator
 from sympy import simplify
+
+from .equation_tree import EquationTree, is_binary_tree, rooted_tree_iterator
 
 padding = "<PAD>"
 
@@ -382,14 +383,3 @@ def is_numeric(s):
         return True
     except ValueError:
         return False
-
-
-# equations, evaluations = sample_equations(num_samples=10,
-#                         max_depth=4,
-#                         max_num_variables=2,
-#                         max_num_constants=2,
-#                         function_space=['sin', 'cos', 'tan', 'exp', 'log', 'sqrt', 'abs'],
-#                         operation_space=['+', '-', '*', '/'],
-#                         without_replacement=True)
-#
-# print(equations)
