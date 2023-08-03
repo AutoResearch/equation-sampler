@@ -3,7 +3,7 @@ import itertools
 import numpy as np
 from sympy import simplify
 
-from src.equation_sampler.equation_tree import EquationTree, is_binary_tree, rooted_tree_iterator
+from .equation_tree import EquationTree, is_binary_tree, rooted_tree_iterator
 
 padding = "<PAD>"
 
