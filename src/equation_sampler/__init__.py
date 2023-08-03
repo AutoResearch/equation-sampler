@@ -3,7 +3,7 @@ import itertools
 import numpy as np
 from sympy import simplify
 
-from .equation_tree import EquationTree, is_binary_tree, rooted_tree_iterator
+from src.equation_sampler.equation_tree import EquationTree, is_binary_tree, rooted_tree_iterator
 
 padding = "<PAD>"
 
@@ -377,9 +377,31 @@ def get_evaluation(
     return evaluation
 
 
+def to_sympy(equations: list, function_space: list, operator_space: list):
+    """
+    Helper function to transform the output from an equation sampler into sympy readable format
+
+    Args:
+        equations: output of sample_equations
+        function_space: function space used in sample_equations
+        operator_space: operator space used in sample_equations
+
+    Returns:
+
+    """
+    res = equations
+    for i in range(len(res[0])):
+        res[0][i] = simplify(prefix_to_infix(res[0][i], function_space, operator_space))
+    return res
+
+
 def is_numeric(s):
     try:
         float(s)
         return True
     except ValueError:
         return False
+
+
+
+
