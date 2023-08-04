@@ -132,7 +132,8 @@ def sample_equations(
     num_evaluation_samples: int = 100,
     max_iter: int = 1000000,
     require_simplify=True,
-    verbose=True,
+    verbose=False,
+    is_real_domain=True,
 ):
     """
     Generate data for the equation generator.
