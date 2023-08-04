@@ -1,7 +1,7 @@
 import itertools
 
 import numpy as np
-from sympy import simplify
+from sympy import simplify, symbols, sympify
 
 from .equation_tree import EquationTree, is_binary_tree, rooted_tree_iterator
 
@@ -118,8 +118,8 @@ def sample_equations(
     max_depth: int,
     max_num_variables: int,
     max_num_constants: int,
-    function_space: list,
-    operation_space: list,
+    function_space: list = ["sin", "cos", "tan", "exp", "log", "sqrt", "abs"],
+    operator_space: list = ["+", "-", "*", "/", "^"],
     without_replacement: bool = True,
     fix_num_variables_to_max: bool = False,
     include_zero_as_constant=False,
@@ -132,7 +132,8 @@ def sample_equations(
     num_evaluation_samples: int = 100,
     max_iter: int = 1000000,
     require_simplify=True,
-    verbose=True,
+    verbose=False,
+    is_real_domain=True,
 ):
     """
     Generate data for the equation generator.
@@ -143,7 +144,7 @@ def sample_equations(
         max_num_variables: Number of variables in the equation tree.
         max_num_constants: Maximum number of constants in the equation tree.
         function_space: List of functions to use in the equation tree.
-        operation_space: List of operations to use in the equation tree.
+        operator_space: List of operations to use in the equation tree.
         without_replacement: Whether to sample without replacement.
         fix_num_variables_to_max: Whether to fix the number of variables.
         include_zero_as_constant: Whether to include zero as a constant.
@@ -153,7 +154,11 @@ def sample_equations(
         max_constant_value: Maximum value of the constants.
         num_input_points: Number of points to sample for each input variable and constant.
         num_constant_points: Number of points to sample for each constant.
-        num_condition_samples: Number of samples to use for the crossing of all input variables.
+        num_evaluation_samples: ...,
+        max_iter: ...,
+        require_simplify: Defines if the equations are simplified
+        verbose: Defines if additional output is generated
+        is_real_domain: Defines if the variables and constants are real or complex numbers
     """
     # operators = function_space + operation_space
     # num_features = len(operators) + max_num_variables + max_num_constants
@@ -190,25 +195,35 @@ def sample_equations(
                 continue
             # sample a tree
             tree = EquationTree(
-                tree_structure, feature_space, function_space, operation_space
+                tree_structure, feature_space, function_space, operator_space
             )
             # sample a valid equation
             tree.sample_valid()
 
             if require_simplify:  # simplify equation
                 current_infix = prefix_to_infix(
-                    tree.expr, function_space, operation_space
+                    tree.expr, function_space, operator_space
                 )
                 if verbose:
                     print("_________")
                     print("infix initial", current_infix)
                     print("initial tree", tree.expr)
-                simplified_equation = simplify(current_infix)
+
+                # create a sympy expression from string
+                expr = sympify(current_infix)
+                symbol_names = [str(symbol) for symbol in expr.free_symbols]
+                real_symbols = symbols(" ".join(symbol_names), real=is_real_domain)
+                if not isinstance(real_symbols, list):
+                    real_symbols = [real_symbols]
+                subs_dict = {old: new for old, new in zip(symbol_names, real_symbols)}
+                expr = expr.subs(subs_dict)
+
+                simplified_equation = simplify(expr)
                 simplified_equation = str(simplified_equation)
                 simplified_equation = simplified_equation.replace(" ", "")
                 simplified_equation = simplified_equation.replace("**", "^")
                 prefix = infix_to_prefix(
-                    simplified_equation, function_space, operation_space
+                    simplified_equation, function_space, operator_space
                 )
                 if verbose:
                     print("prefix", simplified_equation)
@@ -219,7 +234,7 @@ def sample_equations(
                     prefix.remove("re")
                 if "zoo" in prefix:
                     continue
-                tree = EquationTree([], feature_space, function_space, operation_space)
+                tree = EquationTree([], feature_space, function_space, operator_space)
                 tree.instantiate_from_prefix_notation(prefix)
 
             # if we want to sample without replacement and if tree is already sampled, continue
@@ -377,7 +392,11 @@ def get_evaluation(
     return evaluation
 
 
-def to_sympy(equations: list, function_space: list, operator_space: list):
+def to_sympy(
+    equations: list,
+    function_space: list = ["sin", "cos", "tan", "exp", "log", "sqrt", "abs"],
+    operator_space: list = ["+", "-", "*", "/", "^"],
+):
     """
     Helper function to transform the output from an equation sampler into sympy readable format
 
@@ -385,8 +404,6 @@ def to_sympy(equations: list, function_space: list, operator_space: list):
         equations: output of sample_equations
         function_space: function space used in sample_equations
         operator_space: operator space used in sample_equations
-
-    Returns:
 
     """
     res = equations
@@ -401,7 +418,3 @@ def is_numeric(s):
         return True
     except ValueError:
         return False
-
-
-
-
