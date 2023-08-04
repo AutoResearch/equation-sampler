@@ -392,7 +392,11 @@ def get_evaluation(
     return evaluation
 
 
-def to_sympy(equations: list, function_space: list, operator_space: list):
+def to_sympy(
+    equations: list,
+    function_space: list = ["sin", "cos", "tan", "exp", "log", "sqrt", "abs"],
+    operator_space: list = ["+", "-", "*", "/", "^"],
+):
     """
     Helper function to transform the output from an equation sampler into sympy readable format
 
