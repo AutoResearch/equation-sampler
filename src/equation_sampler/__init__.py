@@ -144,7 +144,7 @@ def sample_equations(
         max_num_variables: Number of variables in the equation tree.
         max_num_constants: Maximum number of constants in the equation tree.
         function_space: List of functions to use in the equation tree.
-        operation_space: List of operations to use in the equation tree.
+        operator_space: List of operations to use in the equation tree.
         without_replacement: Whether to sample without replacement.
         fix_num_variables_to_max: Whether to fix the number of variables.
         include_zero_as_constant: Whether to include zero as a constant.
@@ -191,14 +191,14 @@ def sample_equations(
                 continue
             # sample a tree
             tree = EquationTree(
-                tree_structure, feature_space, function_space, operation_space
+                tree_structure, feature_space, function_space, operator_space
             )
             # sample a valid equation
             tree.sample_valid()
 
             if require_simplify:  # simplify equation
                 current_infix = prefix_to_infix(
-                    tree.expr, function_space, operation_space
+                    tree.expr, function_space, operator_space
                 )
                 if verbose:
                     print("_________")
@@ -209,7 +209,7 @@ def sample_equations(
                 simplified_equation = simplified_equation.replace(" ", "")
                 simplified_equation = simplified_equation.replace("**", "^")
                 prefix = infix_to_prefix(
-                    simplified_equation, function_space, operation_space
+                    simplified_equation, function_space, operator_space
                 )
                 if verbose:
                     print("prefix", simplified_equation)
@@ -220,7 +220,7 @@ def sample_equations(
                     prefix.remove("re")
                 if "zoo" in prefix:
                     continue
-                tree = EquationTree([], feature_space, function_space, operation_space)
+                tree = EquationTree([], feature_space, function_space, operator_space)
                 tree.instantiate_from_prefix_notation(prefix)
 
             # if we want to sample without replacement and if tree is already sampled, continue
