@@ -401,8 +401,6 @@ def to_sympy(equations: list, function_space: list, operator_space: list):
         function_space: function space used in sample_equations
         operator_space: operator space used in sample_equations
 
-    Returns:
-
     """
     res = equations
     for i in range(len(res[0])):
@@ -416,7 +414,3 @@ def is_numeric(s):
         return True
     except ValueError:
         return False
-
-
-
-
