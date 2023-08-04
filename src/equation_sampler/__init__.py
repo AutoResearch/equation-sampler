@@ -154,7 +154,11 @@ def sample_equations(
         max_constant_value: Maximum value of the constants.
         num_input_points: Number of points to sample for each input variable and constant.
         num_constant_points: Number of points to sample for each constant.
-        num_condition_samples: Number of samples to use for the crossing of all input variables.
+        num_evaluation_samples: ...,
+        max_iter: ...,
+        require_simplify: Defines if the equations are simplified
+        verbose: Defines if additional output is generated
+        is_real_domain: Defines if the variables and constants are real or complex numbers
     """
     # operators = function_space + operation_space
     # num_features = len(operators) + max_num_variables + max_num_constants
