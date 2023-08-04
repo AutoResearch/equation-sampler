@@ -208,7 +208,17 @@ def sample_equations(
                     print("_________")
                     print("infix initial", current_infix)
                     print("initial tree", tree.expr)
-                simplified_equation = simplify(current_infix)
+
+                # create a sympy expression from string
+                expr = sympify(current_infix)
+                symbol_names = [str(symbol) for symbol in expr.free_symbols]
+                real_symbols = symbols(" ".join(symbol_names), real=is_real_domain)
+                if not isinstance(real_symbols, list):
+                    real_symbols = [real_symbols]
+                subs_dict = {old: new for old, new in zip(symbol_names, real_symbols)}
+                expr = expr.subs(subs_dict)
+
+                simplified_equation = simplify(expr)
                 simplified_equation = str(simplified_equation)
                 simplified_equation = simplified_equation.replace(" ", "")
                 simplified_equation = simplified_equation.replace("**", "^")
