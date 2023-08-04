@@ -1,7 +1,7 @@
 import itertools
 
 import numpy as np
-from sympy import simplify
+from sympy import simplify, symbols, sympify
 
 from .equation_tree import EquationTree, is_binary_tree, rooted_tree_iterator
 
