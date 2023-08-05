@@ -1,7 +1,8 @@
 import itertools
+import re
 
 import numpy as np
-from sympy import simplify, symbols, sympify
+from sympy import I, simplify, symbols, sympify
 
 from .equation_tree import EquationTree, is_binary_tree, rooted_tree_iterator
 
@@ -118,7 +119,7 @@ def sample_equations(
     max_depth: int,
     max_num_variables: int,
     max_num_constants: int,
-    function_space: list = ["sin", "cos", "tan", "exp", "log", "sqrt", "abs"],
+    function_space: list = ["sin", "cos", "tan", "exp", "log", "sqrt", "abs", "neg"],
     operator_space: list = ["+", "-", "*", "/", "^"],
     without_replacement: bool = True,
     fix_num_variables_to_max: bool = False,
@@ -159,11 +160,14 @@ def sample_equations(
         require_simplify: Defines if the equations are simplified
         verbose: Defines if additional output is generated
         is_real_domain: Defines if the variables and constants are real or complex numbers
+        returns_tokenized: Defines if a tokenized expression is returned additionaly
     """
     # operators = function_space + operation_space
     # num_features = len(operators) + max_num_variables + max_num_constants
     equation_list = list()
+    sympy_equation_list = list()
     evaluation_list = list()
+
     max_equation_elements = 0
 
     feature_space = list()
@@ -201,25 +205,15 @@ def sample_equations(
             tree.sample_valid()
 
             if require_simplify:  # simplify equation
-                current_infix = prefix_to_infix(
-                    tree.expr, function_space, operator_space
+                sympy_expression = _tree_expr_to_sympy(
+                    tree, function_space, operator_space, is_real_domain, verbose
                 )
-                if verbose:
-                    print("_________")
-                    print("infix initial", current_infix)
-                    print("initial tree", tree.expr)
+                if I in sympy_expression.expr_free_symbols:
+                    continue
 
-                # create a sympy expression from string
-                expr = sympify(current_infix)
-                symbol_names = [str(symbol) for symbol in expr.free_symbols]
-                real_symbols = symbols(" ".join(symbol_names), real=is_real_domain)
-                if not isinstance(real_symbols, list):
-                    real_symbols = [real_symbols]
-                subs_dict = {old: new for old, new in zip(symbol_names, real_symbols)}
-                expr = expr.subs(subs_dict)
-
-                simplified_equation = simplify(expr)
+                simplified_equation = simplify(sympy_expression)
                 simplified_equation = str(simplified_equation)
+                simplified_equation = replace_unary_minus(simplified_equation)
                 simplified_equation = simplified_equation.replace(" ", "")
                 simplified_equation = simplified_equation.replace("**", "^")
                 prefix = infix_to_prefix(
@@ -263,7 +257,6 @@ def sample_equations(
                 num_constant_points,
                 num_evaluation_samples,
             )
-
             evaluation = get_evaluation(
                 crossings,
                 tree,
@@ -279,6 +272,11 @@ def sample_equations(
 
         # add to lists
         equation_list.append(tree.expr)
+        sympy_equation_list.append(
+            _tree_expr_to_sympy(
+                tree, function_space, operator_space, is_real_domain, False
+            )
+        )
         evaluation_list.append(evaluation)
         max_equation_elements = max(max_equation_elements, len(tree.expr))
 
@@ -301,7 +299,11 @@ def sample_equations(
         evaluation_list[idx] = evaluation.T
 
     print("all equations generated")
-    return equation_list, evaluation_list
+    return {
+        "tokenized_equations": equation_list,
+        "sympy_equations": sympy_equation_list,
+        "evalutions": evaluation_list,
+    }
 
 
 def create_crossings(
@@ -392,29 +394,90 @@ def get_evaluation(
     return evaluation
 
 
-def to_sympy(
-    equations: list,
-    function_space: list = ["sin", "cos", "tan", "exp", "log", "sqrt", "abs"],
-    operator_space: list = ["+", "-", "*", "/", "^"],
-):
-    """
-    Helper function to transform the output from an equation sampler into sympy readable format
-
-    Args:
-        equations: output of sample_equations
-        function_space: function space used in sample_equations
-        operator_space: operator space used in sample_equations
-
-    """
-    res = equations
-    for i in range(len(res[0])):
-        res[0][i] = simplify(prefix_to_infix(res[0][i], function_space, operator_space))
-    return res
-
-
 def is_numeric(s):
     try:
         float(s)
         return True
     except ValueError:
         return False
+
+
+def _tree_expr_to_sympy(tree, function_space, operator_space, is_real_domain, verbose):
+    current_infix = prefix_to_infix(tree.expr, function_space, operator_space)
+    if verbose:
+        print("_________")
+        print("infix initial", current_infix)
+        print("initial tree", tree.expr)
+    # create a sympy expression from string
+    to_sympy = replace_neg_with_minus(current_infix)
+    expr = sympify(to_sympy)
+    if expr.free_symbols:
+        symbol_names = [str(symbol) for symbol in expr.free_symbols]
+        real_symbols = symbols(" ".join(symbol_names), real=is_real_domain)
+        if not isinstance(real_symbols, list) and not isinstance(real_symbols, tuple):
+            real_symbols = [real_symbols]
+        subs_dict = {old: new for old, new in zip(symbol_names, real_symbols)}
+        expr = expr.subs(subs_dict)
+
+    return expr
+
+
+def replace_unary_minus(s):
+    # Replace unary minus at the beginning
+    s = re.sub(r"^-", "neg%", s)
+
+    # Replace unary minus after operators or an open parenthesis
+    s = re.sub(r"([\(\+\-\*/])-", r"\1neg%", s)
+
+    if "neg%" not in s:
+        return s
+
+    result = []
+    i = 0
+    while i < len(s):
+        if s[i : i + 4] == "neg%":
+            result.append("neg(")
+            i += 4  # Jump past the placeholder
+
+            # Handle unary minus before a variable, number, or another unary operation
+            if s[i].isalnum() or s[i] in ["-", "+", "*"]:
+                op = 0
+                while (
+                    i < len(s)
+                    and (s[i].isalnum() or s[i] in ["_", "(", "%", ")"])
+                    or op > 0
+                ):
+                    if s[i] in ["("]:
+                        op += 1
+                    if s[i] == ")":
+                        op -= 1
+                    result.append(s[i])
+                    i += 1
+                result.append(")")
+                continue
+
+            # Handle unary minus before a function or an expression in parentheses
+            depth = 0
+            while i < len(s):
+                if s[i] == "(":
+                    depth += 1
+                elif s[i] == ")":
+                    depth -= 1
+                    if depth == 0:
+                        break
+                result.append(s[i])
+                i += 1
+
+            result.append(")")
+        else:
+            result.append(s[i])
+            i += 1
+
+    return replace_unary_minus("".join(result))
+
+
+def replace_neg_with_minus(expr):
+    result = expr
+    while "neg" in result:
+        result = re.sub(r"neg\((.*?)\)", r"-(\1)", result)
+    return result

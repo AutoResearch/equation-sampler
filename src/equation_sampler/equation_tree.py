@@ -22,6 +22,7 @@ functions: Dict[str, UnaryOperator] = {
     "log": lambda a: np.log(a),
     "sqrt": lambda a: np.sqrt(a),
     "abs": lambda a: np.abs(a),
+    "neg": lambda a: -a,
 }
 
 
@@ -541,7 +542,6 @@ class EquationTree:
         return eval
 
     def instantiate_from_prefix_notation(self, prefix_notation: List):
-
         self.operating_prefix_notation = prefix_notation.copy()
         self.root, self.num_x, self.num_c, self.expr = self.generate_from_prefix(0)
         return self.root
