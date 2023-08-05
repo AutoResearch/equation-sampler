@@ -1,5 +1,6 @@
 # PyCharm ignores are handled by the .idea/.gitignore file
 # VSCode ignores are handled by the .vscode/.gitignore file
+.idea
 
 # Python Environment
 .python-version
