@@ -3,8 +3,8 @@ import itertools
 import numpy as np
 from sympy import simplify, symbols, sympify, I
 
-from src.equation_sampler.equation_tree import EquationTree, is_binary_tree, rooted_tree_iterator
-from src.equation_sampler.util.unary_minus_to_binary import unary_minus_to_binary
+from .equation_tree import EquationTree, is_binary_tree, rooted_tree_iterator
+from .util.unary_minus_to_binary import unary_minus_to_binary
 
 padding = "<PAD>"
 
