@@ -146,6 +146,8 @@ def sample_equations(
         max_num_constants: Maximum number of constants in the equation tree.
         function_space: List of functions to use in the equation tree.
         operator_space: List of operations to use in the equation tree.
+        function_priors: Dict with priors for the functions.
+        operator_priors: Dict with priors for the operators.
         without_replacement: Whether to sample without replacement.
         fix_num_variables_to_max: Whether to fix the number of variables.
         include_zero_as_constant: Whether to include zero as a constant.
@@ -442,4 +444,4 @@ def _simplified_tree(expr, feature_space, function_space, operator_space, is_rea
 
 
 #np.random.seed(42)
-sample_equations(100, 6, 3, 5)
+#sample_equations(100, 6, 3, 5)
