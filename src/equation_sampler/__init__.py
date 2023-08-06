@@ -1,9 +1,10 @@
 import itertools
 
 import numpy as np
-from sympy import simplify, symbols, sympify
+from sympy import simplify, symbols, sympify, I
 
 from .equation_tree import EquationTree, is_binary_tree, rooted_tree_iterator
+from .util.unary_minus_to_binary import unary_minus_to_binary
 
 padding = "<PAD>"
 
@@ -48,7 +49,7 @@ def infix_to_postfix(infix, function_space, operation_space):
     while i < n:
         # Check if the character is alphabet or digit
         if infix[i].isdigit() and infix[i + 1] == "_":
-            output.append(infix[i : i + 3][::-1])
+            output.append(infix[i: i + 3][::-1])
             i += 2
         elif infix[i].isdigit():
             output.append(infix[i])
@@ -65,9 +66,9 @@ def infix_to_postfix(infix, function_space, operation_space):
         # Found an operator
         else:
             if (
-                char_stack[-1] in function_space
-                or char_stack[-1] in operation_space
-                or char_stack[-1] in [")", "("]
+                    char_stack[-1] in function_space
+                    or char_stack[-1] in operation_space
+                    or char_stack[-1] in [")", "("]
             ):
                 if infix[i] == "^":
                     while get_priority(infix[i]) <= get_priority(char_stack[-1]):
@@ -114,26 +115,26 @@ def infix_to_prefix(infix, function_space, operation_space):
 
 
 def sample_equations(
-    num_samples: int,
-    max_depth: int,
-    max_num_variables: int,
-    max_num_constants: int,
-    function_space: list = ["sin", "cos", "tan", "exp", "log", "sqrt", "abs"],
-    operator_space: list = ["+", "-", "*", "/", "^"],
-    without_replacement: bool = True,
-    fix_num_variables_to_max: bool = False,
-    include_zero_as_constant=False,
-    min_input_value: float = -1,
-    max_input_value: float = 1,
-    min_constant_value: float = -1,
-    max_constant_value: float = 1,
-    num_input_points: int = 100,
-    num_constant_points: int = 100,
-    num_evaluation_samples: int = 100,
-    max_iter: int = 1000000,
-    require_simplify=True,
-    verbose=False,
-    is_real_domain=True,
+        num_samples: int,
+        max_depth: int,
+        max_num_variables: int,
+        max_num_constants: int,
+        function_space: list = ["sin", "cos", "tan", "exp", "log", "sqrt", "abs"],
+        operator_space: list = ["+", "-", "*", "/", "^"],
+        without_replacement: bool = True,
+        fix_num_variables_to_max: bool = False,
+        include_zero_as_constant=False,
+        min_input_value: float = -1,
+        max_input_value: float = 1,
+        min_constant_value: float = -1,
+        max_constant_value: float = 1,
+        num_input_points: int = 100,
+        num_constant_points: int = 100,
+        num_evaluation_samples: int = 100,
+        max_iter: int = 1000000,
+        require_simplify=True,
+        verbose=False,
+        is_real_domain=True,
 ):
     """
     Generate data for the equation generator.
@@ -162,7 +163,8 @@ def sample_equations(
     """
     # operators = function_space + operation_space
     # num_features = len(operators) + max_num_variables + max_num_constants
-    equation_list = list()
+    tokenized_equation_list = list()
+    sympy_equation_list = list()
     evaluation_list = list()
     max_equation_elements = 0
 
@@ -208,20 +210,21 @@ def sample_equations(
                     print("_________")
                     print("infix initial", current_infix)
                     print("initial tree", tree.expr)
-
+                print(tree.expr)
                 # create a sympy expression from string
-                expr = sympify(current_infix)
-                symbol_names = [str(symbol) for symbol in expr.free_symbols]
-                real_symbols = symbols(" ".join(symbol_names), real=is_real_domain)
-                if not isinstance(real_symbols, list):
-                    real_symbols = [real_symbols]
-                subs_dict = {old: new for old, new in zip(symbol_names, real_symbols)}
-                expr = expr.subs(subs_dict)
-
+                expr = _tree_expr_to_sympy(tree, function_space, operator_space, is_real_domain, verbose)
+                print(expr)
                 simplified_equation = simplify(expr)
-                simplified_equation = str(simplified_equation)
+
+                if I in simplified_equation.free_symbols:
+                    continue
+                #simplified_equation = str(simplified_equation)
+                simplified_equation = unary_minus_to_binary(str(simplified_equation), operator_space)
+
                 simplified_equation = simplified_equation.replace(" ", "")
                 simplified_equation = simplified_equation.replace("**", "^")
+                print(simplified_equation)
+
                 prefix = infix_to_prefix(
                     simplified_equation, function_space, operator_space
                 )
@@ -235,10 +238,11 @@ def sample_equations(
                 if "zoo" in prefix:
                     continue
                 tree = EquationTree([], feature_space, function_space, operator_space)
+                print(prefix)
                 tree.instantiate_from_prefix_notation(prefix)
 
             # if we want to sample without replacement and if tree is already sampled, continue
-            if tree in equation_list and without_replacement:
+            if tree in tokenized_equation_list and without_replacement:
                 continue
 
             # if tree has too many variables or constants, continue
@@ -246,8 +250,8 @@ def sample_equations(
                 continue
 
             if (
-                fix_num_variables_to_max
-                and len(np.unique(tree.variables)) < max_num_variables
+                    fix_num_variables_to_max
+                    and len(np.unique(tree.variables)) < max_num_variables
             ):
                 continue
 
@@ -278,7 +282,8 @@ def sample_equations(
                 break
 
         # add to lists
-        equation_list.append(tree.expr)
+        tokenized_equation_list.append(tree.expr)
+        sympy_equation_list.append(_tree_expr_to_sympy(tree, function_space, operator_space, is_real_domain, False))
         evaluation_list.append(evaluation)
         max_equation_elements = max(max_equation_elements, len(tree.expr))
 
@@ -287,10 +292,10 @@ def sample_equations(
             print(f"{sample} equations generated")
 
     # pad the equations and evaluations
-    for idx, equation in enumerate(equation_list):
+    for idx, equation in enumerate(tokenized_equation_list):
         num_equation_elements = len(equation)
         for i in range(max_equation_elements - num_equation_elements):
-            equation_list[idx].append(padding)
+            tokenized_equation_list[idx].append(padding)
             evaluation_list[idx] = np.append(
                 evaluation_list[idx], np.zeros((num_evaluation_samples, 1)), axis=1
             )
@@ -301,19 +306,23 @@ def sample_equations(
         evaluation_list[idx] = evaluation.T
 
     print("all equations generated")
-    return equation_list, evaluation_list
+    return {
+        'tokenized_equations': tokenized_equation_list,
+        'sympy_equations': sympy_equation_list,
+        'evaluations': evaluation_list
+    }
 
 
 def create_crossings(
-    num_inputs,
-    num_constants,
-    min_input_value: float = -1,
-    max_input_value: float = 1,
-    min_constant_value: float = -1,
-    max_constant_value: float = 1,
-    num_input_points: int = 100,
-    num_constant_points: int = 100,
-    num_evaluation_samples: int = 100,
+        num_inputs,
+        num_constants,
+        min_input_value: float = -1,
+        max_input_value: float = 1,
+        min_constant_value: float = -1,
+        max_constant_value: float = 1,
+        num_input_points: int = 100,
+        num_constant_points: int = 100,
+        num_evaluation_samples: int = 100,
 ):
     grids = []
 
@@ -341,12 +350,12 @@ def create_crossings(
 
 
 def get_evaluation(
-    crossings,
-    tree,
-    num_evaluation_samples=100,
-    include_zero_as_constant=False,
-    max_nodes_for_evaluation=None,
-    transpose=False,
+        crossings,
+        tree,
+        num_evaluation_samples=100,
+        include_zero_as_constant=False,
+        max_nodes_for_evaluation=None,
+        transpose=False,
 ):
     evaluation = np.zeros((num_evaluation_samples, len(tree.expr)))
 
@@ -392,29 +401,26 @@ def get_evaluation(
     return evaluation
 
 
-def to_sympy(
-    equations: list,
-    function_space: list = ["sin", "cos", "tan", "exp", "log", "sqrt", "abs"],
-    operator_space: list = ["+", "-", "*", "/", "^"],
-):
-    """
-    Helper function to transform the output from an equation sampler into sympy readable format
-
-    Args:
-        equations: output of sample_equations
-        function_space: function space used in sample_equations
-        operator_space: operator space used in sample_equations
-
-    """
-    res = equations
-    for i in range(len(res[0])):
-        res[0][i] = simplify(prefix_to_infix(res[0][i], function_space, operator_space))
-    return res
-
-
 def is_numeric(s):
     try:
         float(s)
         return True
     except ValueError:
         return False
+
+def _tree_expr_to_sympy(tree, function_space, operator_space, is_real_domain, verbose):
+    current_infix = prefix_to_infix(tree.expr, function_space, operator_space)
+    if verbose:
+        print("_________")
+        print("infix initial", current_infix)
+        print("initial tree", tree.expr)
+    # create a sympy expression from string
+    expr = sympify(current_infix)
+    if expr.free_symbols:
+        symbol_names = [str(symbol) for symbol in expr.free_symbols]
+        real_symbols = symbols(" ".join(symbol_names), real=is_real_domain)
+        if not isinstance(real_symbols, list) and not isinstance(real_symbols, tuple):
+            real_symbols = [real_symbols]
+        subs_dict = {old: new for old, new in zip(symbol_names, real_symbols)}
+        expr = expr.subs(subs_dict)
+    return expr
