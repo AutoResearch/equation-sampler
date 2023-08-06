@@ -40,8 +40,8 @@ def move_placeholder(expression, operators):
                     open_brackets += 1
                 if j < len(expression) and expression[j] == ')':
                     open_brackets -= 1
-                    if open_brackets == 0:
-                        j += 1
+                    if open_brackets <= 0:
+                        j += 1 + open_brackets
                         break
 
             end = j
@@ -81,10 +81,9 @@ def replace_with_zero_minus(expression, operators):
                     open_brackets += 1
                 if j < len(expression) and expression[j] == ')':
                     open_brackets -= 1
-                    if open_brackets == 0:
-                        j += 1
+                    if open_brackets <= 0:
+                        j += 1 + open_brackets
                         break
-
             end = j
             break
         i += 1

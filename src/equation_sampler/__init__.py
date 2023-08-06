@@ -3,8 +3,8 @@ import itertools
 import numpy as np
 from sympy import simplify, symbols, sympify, I
 
-from .equation_tree import EquationTree, is_binary_tree, rooted_tree_iterator
-from .util.unary_minus_to_binary import unary_minus_to_binary
+from src.equation_sampler.equation_tree import EquationTree, is_binary_tree, rooted_tree_iterator
+from src.equation_sampler.util.unary_minus_to_binary import unary_minus_to_binary
 
 padding = "<PAD>"
 
@@ -161,33 +161,28 @@ def sample_equations(
         verbose: Defines if additional output is generated
         is_real_domain: Defines if the variables and constants are real or complex numbers
     """
-    # operators = function_space + operation_space
-    # num_features = len(operators) + max_num_variables + max_num_constants
+    if max_depth < 3:
+        raise ValueError("max_depth must be at least 3")
+
     tokenized_equation_list = list()
     sympy_equation_list = list()
     evaluation_list = list()
     max_equation_elements = 0
 
-    feature_space = list()
-    for i in range(max_num_variables):
-        feature_space.append(f"x_{i + 1}")
-    for i in range(max_num_constants):
-        feature_space.append(f"c_{i + 1}")
+    # Generate Feature Space
+    feature_space = [f"x_{i + 1}" for i in range(max_num_variables)] + \
+                    [f"c_{i + 1}" for i in range(max_num_constants)]
+
     if include_zero_as_constant:
         feature_space.append("0")
 
-    if max_depth < 3:
-        raise ValueError("max_depth must be at least 3")
+    # Generate all possible trees
+    tree_structures = [
+        tree.copy() for depth in range(3, max_depth + 1) for tree in rooted_tree_iterator(depth)
+    ]
 
-    # enumerate all tree structures
-    tree_structures = list()
-    for depth in range(3, max_depth + 1):
-        trees = rooted_tree_iterator(depth)
-        for tree in trees:
-            tree_structures.append(tree.copy())
-
+    # sample
     for sample in range(num_samples):
-
         for i in range(max_iter):
             # sample a tree structure
             idx_sample = np.random.randint(0, len(tree_structures))
@@ -195,6 +190,7 @@ def sample_equations(
             # check if tree is binary, else continue
             if is_binary_tree(tree_structure) is False:
                 continue
+
             # sample a tree
             tree = EquationTree(
                 tree_structure, feature_space, function_space, operator_space
@@ -202,47 +198,18 @@ def sample_equations(
             # sample a valid equation
             tree.sample_valid()
 
+            # simplify the tree
             if require_simplify:  # simplify equation
-                current_infix = prefix_to_infix(
-                    tree.expr, function_space, operator_space
+                simplified_tree = _simplified_tree(
+                    tree.expr, feature_space, function_space,
+                    operator_space, is_real_domain, verbose
                 )
-                if verbose:
-                    print("_________")
-                    print("infix initial", current_infix)
-                    print("initial tree", tree.expr)
-                print(tree.expr)
-                # create a sympy expression from string
-                expr = _tree_expr_to_sympy(tree, function_space, operator_space, is_real_domain, verbose)
-                print(expr)
-                simplified_equation = simplify(expr)
-
-                if I in simplified_equation.free_symbols:
+                if simplified_tree is None:
                     continue
-                #simplified_equation = str(simplified_equation)
-                simplified_equation = unary_minus_to_binary(str(simplified_equation), operator_space)
-
-                simplified_equation = simplified_equation.replace(" ", "")
-                simplified_equation = simplified_equation.replace("**", "^")
-                print(simplified_equation)
-
-                prefix = infix_to_prefix(
-                    simplified_equation, function_space, operator_space
-                )
-                if verbose:
-                    print("prefix", simplified_equation)
-                    print("prefix tree", prefix)
-                if len(prefix) > len(tree.expr):
-                    prefix = tree.expr
-                if "re" in prefix:
-                    prefix.remove("re")
-                if "zoo" in prefix:
-                    continue
-                tree = EquationTree([], feature_space, function_space, operator_space)
-                print(prefix)
-                tree.instantiate_from_prefix_notation(prefix)
+                tree = simplified_tree
 
             # if we want to sample without replacement and if tree is already sampled, continue
-            if tree in tokenized_equation_list and without_replacement:
+            if without_replacement and tree.expr in tokenized_equation_list:
                 continue
 
             # if tree has too many variables or constants, continue
@@ -283,7 +250,8 @@ def sample_equations(
 
         # add to lists
         tokenized_equation_list.append(tree.expr)
-        sympy_equation_list.append(_tree_expr_to_sympy(tree, function_space, operator_space, is_real_domain, False))
+        sympy_equation_list.append(
+            _tree_expr_to_sympy(tree.expr, function_space, operator_space, is_real_domain, False))
         evaluation_list.append(evaluation)
         max_equation_elements = max(max_equation_elements, len(tree.expr))
 
@@ -408,19 +376,70 @@ def is_numeric(s):
     except ValueError:
         return False
 
-def _tree_expr_to_sympy(tree, function_space, operator_space, is_real_domain, verbose):
-    current_infix = prefix_to_infix(tree.expr, function_space, operator_space)
+
+def _tree_expr_to_sympy(expr, function_space, operator_space, is_real_domain, verbose):
+    """
+    Takes a tree expression as input and returns a sympy expression
+    """
+    current_infix = prefix_to_infix(expr, function_space, operator_space)
     if verbose:
         print("_________")
         print("infix initial", current_infix)
-        print("initial tree", tree.expr)
+        print("initial tree", expr)
     # create a sympy expression from string
-    expr = sympify(current_infix)
-    if expr.free_symbols:
-        symbol_names = [str(symbol) for symbol in expr.free_symbols]
+    sympy_expr = sympify(current_infix)
+    if sympy_expr.free_symbols:
+        symbol_names = [str(symbol) for symbol in sympy_expr.free_symbols]
         real_symbols = symbols(" ".join(symbol_names), real=is_real_domain)
         if not isinstance(real_symbols, list) and not isinstance(real_symbols, tuple):
             real_symbols = [real_symbols]
         subs_dict = {old: new for old, new in zip(symbol_names, real_symbols)}
-        expr = expr.subs(subs_dict)
-    return expr
+        sympy_expr = sympy_expr.subs(subs_dict)
+    return sympy_expr
+
+
+def _simplified_tree(expr, feature_space, function_space, operator_space, is_real_domain, verbose):
+    """
+    Takes a tree expression as input and returns a simplified tree
+    """
+    current_infix = prefix_to_infix(
+        expr, function_space, operator_space
+    )
+    if verbose:
+        print("_________")
+        print("infix initial", current_infix)
+        print("initial tree", expr)
+
+    sympy_expr = _tree_expr_to_sympy(expr, function_space, operator_space, is_real_domain,
+                                     verbose)
+
+    simplified_equation = simplify(sympy_expr)
+
+    if I in simplified_equation.free_symbols:
+        return None
+
+    simplified_equation = unary_minus_to_binary(str(simplified_equation),
+                                                operator_space)
+
+    simplified_equation = simplified_equation.replace(" ", "")
+    simplified_equation = simplified_equation.replace("**", "^")
+
+    prefix = infix_to_prefix(
+        simplified_equation, function_space, operator_space
+    )
+    if verbose:
+        print("prefix", simplified_equation)
+        print("prefix tree", prefix)
+    if len(prefix) > len(expr):
+        prefix = expr
+    if "re" in prefix:
+        prefix.remove("re")
+    if "zoo" in prefix or "oo" in prefix:
+        return None
+    tree = EquationTree([], feature_space, function_space, operator_space)
+    tree.instantiate_from_prefix_notation(prefix)
+    return tree
+
+
+#np.random.seed(42)
+sample_equations(100, 6, 3, 5)
