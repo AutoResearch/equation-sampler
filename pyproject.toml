@@ -12,7 +12,8 @@ requires-python = ">=3.8,<4"
 # ADD NEW DEPENDENCIES HERE
 dependencies = [
     "numpy",
-    "sympy"
+    "sympy",
+    "importlib_resources"
 ]
 
 [project.optional-dependencies]

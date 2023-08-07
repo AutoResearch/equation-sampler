@@ -246,23 +246,6 @@ def count_children(tree_structure, index):
     return children
 
 
-# def sample_attribute_from_tree(tree_structure, index):
-#
-#     num_children = count_children(tree_structure, index)
-#     if num_children == 0:
-#         return sample_attribute(feature_space)
-#     elif num_children == 1:
-#         return sample_attribute(function_space)
-#     elif num_children == 2:
-#         return sample_attribute(operation_space)
-#     else:
-#         raise Exception("Invalid number of children: %s" % num_children)
-
-# def sample_attribute(attribute_list: List[str]):
-#     sample_index = random.randint(0, len(attribute_list)-1)
-#     return attribute_list[sample_index]
-
-
 class EquationTree:
     def __init__(
         self,
@@ -328,8 +311,6 @@ class EquationTree:
         elif attribute in self.feature_space:
             if "x_" in attribute:
                 num_x += 1
-                # attribute = "x_" + str(num_x)
-                # self.operating_feature_space.remove(attribute)
                 type = NodeType.INPUT
             elif "c_" in attribute:
                 num_c += 1
@@ -557,8 +538,6 @@ class EquationTree:
         elif attribute in self.feature_space:
             if "x_" in attribute:
                 num_x += 1
-                # attribute = "x_" + str(num_x)
-                # self.operating_feature_space.remove(attribute)
                 type = NodeType.INPUT
             elif "c_" in attribute:
                 num_c += 1
