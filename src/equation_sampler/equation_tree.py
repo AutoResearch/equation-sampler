@@ -11,7 +11,7 @@ operators: Dict[str, BinaryOperator] = {
     "-": lambda a, b: a - b,
     "*": lambda a, b: a * b,
     "/": lambda a, b: a / b,
-    "^": lambda a, b: a ** b,
+    "^": lambda a, b: a**b,
 }
 
 functions: Dict[str, UnaryOperator] = {
@@ -35,7 +35,7 @@ class NodeType(Enum):
 
 class TreeNode:
     def __init__(
-            self, val=0, left=None, right=None, parent=None, attribute="", evaluation=0
+        self, val=0, left=None, right=None, parent=None, attribute="", evaluation=0
     ):
         self.val = val
         self.children = []
@@ -246,33 +246,16 @@ def count_children(tree_structure, index):
     return children
 
 
-# def sample_attribute_from_tree(tree_structure, index):
-#
-#     num_children = count_children(tree_structure, index)
-#     if num_children == 0:
-#         return sample_attribute(feature_space)
-#     elif num_children == 1:
-#         return sample_attribute(function_space)
-#     elif num_children == 2:
-#         return sample_attribute(operation_space)
-#     else:
-#         raise Exception("Invalid number of children: %s" % num_children)
-
-# def sample_attribute(attribute_list: List[str]):
-#     sample_index = random.randint(0, len(attribute_list)-1)
-#     return attribute_list[sample_index]
-
-
 class EquationTree:
     def __init__(
-            self,
-            tree_structure: np.array,
-            feature_space: List[str],
-            function_space: List[str],
-            operation_space: List[str],
-            feature_priors: Dict[str, float] = dict(),
-            function_priors: Dict[str, float] = dict(),
-            operation_priors: Dict[str, float] = dict(),
+        self,
+        tree_structure: np.array,
+        feature_space: List[str],
+        function_space: List[str],
+        operation_space: List[str],
+        feature_priors: Dict[str, float] = dict(),
+        function_priors: Dict[str, float] = dict(),
+        operation_priors: Dict[str, float] = dict(),
     ):
 
         if is_binary_tree(tree_structure) is False:
@@ -380,7 +363,7 @@ class EquationTree:
             raise Exception("Invalid number of children: %s" % num_children)
 
     def sample_attribute(
-            self, attribute_list: List[str], priors: Dict, parent_attribute=""
+        self, attribute_list: List[str], priors: Dict, parent_attribute=""
     ):
         probabilities = np.ones(len(attribute_list))
         for idx, attribute in enumerate(attribute_list):
@@ -444,7 +427,7 @@ class EquationTree:
                     )
                 return False
             if (
-                    "c_" in node.left.attribute
+                "c_" in node.left.attribute
             ):  # function of a constant is a constant (unnecessary complexity)
                 if verbose:
                     print(
@@ -555,8 +538,6 @@ class EquationTree:
         elif attribute in self.feature_space:
             if "x_" in attribute:
                 num_x += 1
-                # attribute = "x_" + str(num_x)
-                # self.operating_feature_space.remove(attribute)
                 type = NodeType.INPUT
             elif "c_" in attribute:
                 num_c += 1
