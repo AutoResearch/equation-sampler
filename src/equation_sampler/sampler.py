@@ -5,10 +5,10 @@ from typing import List
 import numpy as np
 from sympy import I, simplify, symbols, sympify
 
-from .equation_tree import EquationTree, is_binary_tree, rooted_tree_iterator
-from .measure import get_frequencies
-from .util.hashing import load_adjusted_probabilities, store_adjusted_probabilities
-from .util.unary_minus_to_binary import unary_minus_to_binary
+from equation_sampler.equation_tree import EquationTree, is_binary_tree, rooted_tree_iterator
+from equation_sampler.measure import get_frequencies
+from equation_sampler.util.hashing import load_adjusted_probabilities, store_adjusted_probabilities
+from equation_sampler.util.unary_minus_to_binary import unary_minus_to_binary
 
 padding = "<PAD>"
 
@@ -58,7 +58,7 @@ def infix_to_postfix(infix, function_space, operation_space):
     while i < n:
         # Check if the character is alphabet or digit
         if infix[i].isdigit() and infix[i + 1] == "_":
-            output.append(infix[i : i + 3][::-1])
+            output.append(infix[i: i + 3][::-1])
             i += 2
         elif infix[i].isdigit():
             output.append(infix[i])
@@ -75,9 +75,9 @@ def infix_to_postfix(infix, function_space, operation_space):
         # Found an operator
         else:
             if (
-                char_stack[-1] in function_space
-                or char_stack[-1] in operation_space
-                or char_stack[-1] in [")", "("]
+                    char_stack[-1] in function_space
+                    or char_stack[-1] in operation_space
+                    or char_stack[-1] in [")", "("]
             ):
                 if infix[i] == "^":
                     while get_priority(infix[i]) <= get_priority(char_stack[-1]):
@@ -124,30 +124,30 @@ def infix_to_prefix(infix, function_space, operation_space):
 
 
 def sample_equations(
-    num_samples: int,
-    max_depth: int,
-    max_num_variables: int,
-    max_num_constants: int,
-    function_space: list = ["sin", "cos", "tan", "exp", "log", "sqrt", "abs"],
-    operator_space: list = ["+", "-", "*", "/", "^"],
-    function_priors: dict = {},
-    operator_priors: dict = {},
-    force_full_domain: bool = False,
-    with_replacement: bool = True,
-    fix_num_variables_to_max: bool = False,
-    include_zero_as_constant=False,
-    min_input_value: float = -1,
-    max_input_value: float = 1,
-    min_constant_value: float = -1,
-    max_constant_value: float = 1,
-    num_input_points: int = 100,
-    num_constant_points: int = 100,
-    num_evaluation_samples: int = 100,
-    max_iter: int = 1000000,
-    num_burns: int = 0,
-    require_simplify: bool = True,
-    is_real_domain: bool = True,
-    verbose: bool = False,
+        num_samples: int,
+        max_depth: int,
+        max_num_variables: int,
+        max_num_constants: int,
+        function_space: list = ["sin", "cos", "tan", "exp", "log", "sqrt", "abs"],
+        operator_space: list = ["+", "-", "*", "/", "^"],
+        function_priors: dict = {},
+        operator_priors: dict = {},
+        force_full_domain: bool = False,
+        with_replacement: bool = True,
+        fix_num_variables_to_max: bool = False,
+        include_zero_as_constant=False,
+        min_input_value: float = -1,
+        max_input_value: float = 1,
+        min_constant_value: float = -1,
+        max_constant_value: float = 1,
+        num_input_points: int = 100,
+        num_constant_points: int = 100,
+        num_evaluation_samples: int = 100,
+        max_iter: int = 1000000,
+        num_burns: int = 0,
+        require_simplify: bool = True,
+        is_real_domain: bool = True,
+        verbose: bool = False,
 ):
     """
     Generate data for the equation generator.
@@ -268,12 +268,12 @@ def sample_equations(
             )
             _f = {
                 key: target_probabilities_functions[key]
-                * len(target_probabilities_functions)
+                     * len(target_probabilities_functions)
                 for key in target_probabilities_functions.keys()
             }
             _o = {
                 key: target_probabilities_operators[key]
-                * len(target_probabilities_operators)
+                     * len(target_probabilities_operators)
                 for key in target_probabilities_operators.keys()
             }
             function_probabilities = {
@@ -413,12 +413,12 @@ def create_crossings(num_inputs, num_constants, **kwargs):
 
 
 def get_evaluation(
-    crossings,
-    tree,
-    num_evaluation_samples=100,
-    include_zero_as_constant=False,
-    max_nodes_for_evaluation=None,
-    transpose=False,
+        crossings,
+        tree,
+        num_evaluation_samples=100,
+        include_zero_as_constant=False,
+        max_nodes_for_evaluation=None,
+        transpose=False,
 ):
     evaluation = np.zeros((num_evaluation_samples, len(tree.expr)))
 
@@ -494,7 +494,7 @@ def _tree_expr_to_sympy(expr, function_space, operator_space, is_real_domain, ve
 
 
 def _simplified_tree(
-    expr, feature_space, function_space, operator_space, is_real_domain, verbose
+        expr, feature_space, function_space, operator_space, is_real_domain, verbose
 ):
     """
     Takes a tree expression as input and returns a simplified tree
@@ -598,7 +598,7 @@ def _normalize_priors(priors):
 
 
 def _sample_single_tree(
-    tree_structures, function_probabilities, operator_probabilities, **kwargs
+        tree_structures, function_probabilities, operator_probabilities, **kwargs
 ):
     feature_space = kwargs.get("feature_space")
     function_space = kwargs.get("function_space")
@@ -659,11 +659,11 @@ def _validate_tree_on_conditions(tree, tokenized_equation_list, **kwargs):
 
 
 def _sample_full_equation(
-    tree_structures,
-    tokenized_equation_list,
-    function_probabilities,
-    operator_probabilities,
-    **kwargs,
+        tree_structures,
+        tokenized_equation_list,
+        function_probabilities,
+        operator_probabilities,
+        **kwargs,
 ):
     function_space = kwargs.get("function_space")
     operator_space = kwargs.get("operator_space")
@@ -687,6 +687,10 @@ def _sample_full_equation(
             continue
 
         if not _validate_tree_on_conditions(tree, tokenized_equation_list, **kwargs):
+            continue
+
+        if _zero_probabilities_in_equation(tree.expr, function_space, operator_space,
+                                           function_probabilities, operator_probabilities):
             continue
 
         # now we evaluate each node in the tree for a grid of inputs and constants
@@ -717,3 +721,67 @@ def _sample_full_equation(
         ),
         evaluation,
     )
+
+
+def _zero_probabilities_in_equation(equation,
+                                    function_space=[],
+                                    operator_space=[],
+                                    function_probabilities={},
+                                    operator_probabilities={},
+                                    ):
+    """
+    Returns True, if the tree equation includes operators or functions with zero probability or
+    functions or operators are not in function_space, or operator_space respectivly
+    Examples:
+        >>> test_equation = ['sin', 'x_1']
+        >>> test_function_space = ['sin']
+        >>> test_function_probability = {'sin': 1.0}
+        >>> _zero_probabilities_in_equation(test_equation, function_space=test_function_space, \
+function_probabilities=test_function_probability)
+        False
+
+        >>> test_function_space = ['cos']
+        >>> test_function_probability = {'sin': 1.0}
+        >>> _zero_probabilities_in_equation(test_equation, function_space=test_function_space, \
+function_probabilities=test_function_probability)
+        True
+
+        >>> test_function_space = ['sin']
+        >>> test_function_probability = {'sin': 0.0}
+        >>> _zero_probabilities_in_equation(test_equation, function_space=test_function_space, \
+function_probabilities=test_function_probability)
+        True
+
+        >>> test_equation = ['+', 'x_1', 'c_1']
+        >>> test_operator_space = ['+']
+        >>> test_operator_probability = {'+': 0.3}
+        >>> _zero_probabilities_in_equation(test_equation, operator_space=test_operator_space, \
+operator_probabilities=test_operator_probability)
+        False
+
+        >>> test_operator_space = ['-']
+        >>> test_operator_probability = {'+': 0.5}
+        >>> _zero_probabilities_in_equation(test_equation, operator_space=test_operator_space, \
+operator_probabilities=test_operator_probability)
+        True
+
+        >>> test_operator_space = ['+']
+        >>> test_operator_probability = {'+': 0.0}
+        >>> _zero_probabilities_in_equation(test_equation, operator_space=test_operator_space, \
+operator_probabilities=test_operator_probability)
+        True
+
+    """
+    # get functions with zero probabilities
+    _f_z = [key for key in function_probabilities if function_probabilities[key] <= 0.0]
+    # get operators with zero probabilites:
+    _o_z = [key for key in operator_probabilities if operator_probabilities[key] <= 0.0]
+
+    is_in_equation = False
+    for attribute in _o_z + _f_z:
+        is_in_equation = is_in_equation or attribute in equation
+    for attribute in equation:
+        if is_numeric(attribute) or 'x_' in attribute or 'c_' in attribute:
+            continue
+        is_in_equation = is_in_equation or not attribute in function_space + operator_space
+    return is_in_equation
